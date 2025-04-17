@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to your Dashboard, {{ email }}!</h1>
+    
+    <h2>Add Expense</h2>
+    <form method="post" action="/add">
+        Income: <input type="number" step="0.01" name="income" required><br>
+        Expense Amount: <input type="number" step="0.01" name="expense_amount" required><br>
+        Date: <input type="date" name="expense_date" required><br>
+        Category: <input type="text" name="category" required><br>
+        <button type="submit">Add</button>
+    </form>
+
+    <h2>Your Expenses</h2>
+    <ul>
+        {% for item in expenses %}
+        <li>
+            <form method="post" action="/update/{{ item.id }}">
+                Income: <input type="number" name="income" value="{{ item.income }}" required>
+                Expense: <input type="number" name="expense_amount" value="{{ item.expense_amount }}" required>
+                Date: <input type="date" name="expense_date" value="{{ item.expense_date }}" required>
+                Category: <input type="text" name="category" value="{{ item.category }}" required>
+                <button type="submit">Update</button>
+            </form>
+            <form method="post" action="/delete/{{ item.id }}" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
