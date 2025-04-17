@@ -1,36 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Welcome to your Dashboard, {{ email }}!</h1>
-    
-    <h2>Add Expense</h2>
-    <form method="post" action="/add">
-        Income: <input type="number" step="0.01" name="income" required><br>
-        Expense Amount: <input type="number" step="0.01" name="expense_amount" required><br>
-        Date: <input type="date" name="expense_date" required><br>
-        Category: <input type="text" name="category" required><br>
-        <button type="submit">Add</button>
-    </form>
+    <h2>Welcome, {{ email }}</h2>
 
-    <h2>Your Expenses</h2>
-    <ul>
-        {% for item in expenses %}
-        <li>
-            <form method="post" action="/update/{{ item.id }}">
-                Income: <input type="number" name="income" value="{{ item.income }}" required>
-                Expense: <input type="number" name="expense_amount" value="{{ item.expense_amount }}" required>
-                Date: <input type="date" name="expense_date" value="{{ item.expense_date }}" required>
-                Category: <input type="text" name="category" value="{{ item.category }}" required>
-                <button type="submit">Update</button>
-            </form>
-            <form method="post" action="/delete/{{ item.id }}" style="display:inline;">
-                <button type="submit">Delete</button>
-            </form>
-        </li>
-        {% endfor %}
-    </ul>
+    <h3>Your Expenses:</h3>
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Income</th>
+                <th>Expense</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for expense in expenses %}
+            <tr>
+                <td>{{ expense.expense_date }}</td>
+                <td>{{ expense.category }}</td>
+                <td>${{ expense.income }}</td>
+                <td>${{ expense.expense_amount }}</td>
+                <td>
+                    <!-- Delete Form -->
+                    <form method="POST" action="/delete/{{ expense.id }}" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
+
+                    <!-- Update Form (pre-filled for quick editing) -->
+                    <form method="POST" action="/update/{{ expense.id }}" style="display:inline;">
+                        <input type="number" name="income" value="{{ expense.income }}" required style="width:70px;">
+                        <input type="number" name="expense_amount" value="{{ expense.expense_amount }}" required style="width:70px;">
+                        <input type="date" name="expense_date" value="{{ expense.expense_date }}" required>
+                        <input type="text" name="category" value="{{ expense.category }}" required style="width:80px;">
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Add Expense</h3>
+    <form method="POST" action="/add">
+        <label for="income">Income:</label>
+        <input type="number" id="income" name="income" required>
+
+        <label for="expense_amount">Expense Amount:</label>
+        <input type="number" id="expense_amount" name="expense_amount" required>
+
+        <label for="expense_date">Expense Date:</label>
+        <input type="date" id="expense_date" name="expense_date" required>
+
+        <label for="category">Category:</label>
+        <input type="text" id="category" name="category" required>
+
+        <button type="submit">Add Expense</button>
+    </form>
 </body>
 </html>

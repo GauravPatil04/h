@@ -20,6 +20,21 @@ sessions = {}
 def home(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@app.get("/signup", response_class=HTMLResponse)
+def signup_page(request: Request):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+@app.post("/signup")
+def signup(email: str = Form(...), password: str = Form(...)):
+    result = supabase.auth.sign_up({"email": email, "password": password})
+    if result.user:
+        # Automatically log the user in after successful signup
+        sessions[email] = result.session.access_token
+        response = RedirectResponse(url="/dashboard", status_code=302)
+        response.set_cookie(key="email", value=email)
+        return response
+    return RedirectResponse(url="/signup", status_code=302)
+
 @app.post("/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...)):
     result = supabase.auth.sign_in_with_password({"email": email, "password": password})
@@ -46,7 +61,7 @@ def add_expense(
     request: Request,
     income: float = Form(...),
     expense_amount: float = Form(...),
-    expense_date: date = Form(...),
+    expense_date: str = Form(...),
     category: str = Form(...)
 ):
     email = request.cookies.get("email")
@@ -55,6 +70,7 @@ def add_expense(
 
     user = supabase.auth.get_user(sessions[email])
     user_id = user.user.id
+
     supabase.table("expenses").insert({
         "id": str(uuid.uuid4()),
         "user_id": user_id,
@@ -63,25 +79,105 @@ def add_expense(
         "expense_date": expense_date,
         "category": category
     }).execute()
+
     return RedirectResponse(url="/dashboard", status_code=302)
 
-@app.post("/delete/{id}")
-def delete_expense(id: str):
-    supabase.table("expenses").delete().eq("id", id).execute()
+@app.post("/delete/{expense_id}")
+def delete_expense(expense_id: str):
+    supabase.table("expenses").delete().eq("id", expense_id).execute()
     return RedirectResponse(url="/dashboard", status_code=302)
 
-@app.post("/update/{id}")
-def update_expense(
-    id: str,
-    income: float = Form(...),
-    expense_amount: float = Form(...),
-    expense_date: date = Form(...),
-    category: str = Form(...)
+
+@app.post("/update/{expense_id}")
+async def update_expense(
+    request: Request,
+    expense_id: str,  # change this to str
+    expense_amount: int = Form(...),
+    category: str = Form(...),
+    expense_date: str = Form(...)
 ):
+    email = request.cookies.get("email")
+    if not email or email not in sessions:
+        return RedirectResponse(url="/", status_code=302)
+
+    user = supabase.auth.get_user(sessions[email])
+    user_id = user.user.id
+
+    # Update the record in Supabase
     supabase.table("expenses").update({
-        "income": income,
         "expense_amount": expense_amount,
-        "expense_date": expense_date,
-        "category": category
-    }).eq("id", id).execute()
-    return RedirectResponse(url="/dashboard", status_code=302)
+        "category": category,
+        "expense_date": expense_date
+    }).eq("id", expense_id).eq("user_id", user_id).execute()
+
+    # Fetch updated data and return dashboard
+    data = supabase.table("expenses").select("*").eq("user_id", user_id).execute()
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "expenses": data.data,
+        "email": email
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
